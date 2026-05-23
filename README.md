@@ -3,8 +3,10 @@
 基于LangChain + DeepSeek + Qwen-VL的教案合规性自动检测系统
 
 
-##  系统界面
-<img width="1919" height="921" alt="QQ20260523-224239" src="https://github.com/user-attachments/assets/42a21d84-c345-478f-b4d1-673adfe305f1" />
+##  系统界面简单演示
+
+https://github.com/user-attachments/assets/f7f70761-aef8-4c8e-a4e8-fb28b3cabc01
+
 
 ## 🌟 功能特性
 
