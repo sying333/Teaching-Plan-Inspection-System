@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>教案合规检测系统</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <!-- Markdown渲染库 -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- 高亮库 -->
+    <script src="https://cdn.jsdelivr.net/npm/highlightjs@9.16.2/highlight.pack.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- 头部 -->
+        <header class="header">
+            <div class="brand-block">
+                <span class="brand-tag">合规审阅</span>
+                <h1>教案合规检测系统</h1>
+            </div>
+            <div class="header-info">
+                <span id="file-name">未选择文件</span>
+                <button id="check-btn" class="btn btn-primary" disabled>开始检测</button>
+            </div>
+        </header>
+
+        <!-- 主体三栏布局 -->
+        <div class="main-content">
+            <!-- 左侧栏：文档选择 -->
+            <aside class="left-panel">
+                <div class="panel-header">
+                    <div>
+                        <span class="panel-label">输入</span>
+                        <h2>文档选择</h2>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div class="file-selector">
+                        <label for="file-input" class="file-label">
+                            <span class="upload-icon">上传</span>
+                            <span>选择文档文件</span>
+                            <span class="file-types">支持 .docx / .pdf / .md</span>
+                        </label>
+                        <input type="file" id="file-input" accept=".docx,.doc,.pdf,.md" style="display: none;">
+                    </div>
+                    
+                    <div class="file-info" id="file-info" style="display: none;">
+                        <h3>文件信息</h3>
+                        <div class="info-item">
+                            <span class="label">文件名:</span>
+                            <span class="value" id="info-filename"></span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">大小:</span>
+                            <span class="value" id="info-filesize"></span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">类型:</span>
+                            <span class="value" id="info-filetype"></span>
+                        </div>
+                    </div>
+
+                    <!-- 文档解析状态 -->
+                    <div class="parse-status" id="parse-status" style="display: none;">
+                        <h3>双路径文档解析</h3>
+                        <div class="parse-progress">
+                            <div class="parse-progress-bar" id="parse-progress-bar"></div>
+                        </div>
+                        <p class="parse-message" id="parse-message">准备解析...</p>
+                        <p class="parse-hint">路径1: MinerU文本解析 | 路径2: VL模型布局分析</p>
+                    </div>
+
+                    <!-- 解析结果信息 -->
+                    <div class="parsed-info" id="parsed-info" style="display: none;">
+                        <h3>解析完成</h3>
+                        <div class="info-item">
+                            <span class="label">文档名称:</span>
+                            <span class="value" id="parsed-doc-name"></span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">页面数量:</span>
+                            <span class="value" id="parsed-image-count"></span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">VL分析:</span>
+                            <span class="value" id="parsed-images-dir"></span>
+                        </div>
+                    </div>
+
+                    <!-- 手动指定图片路径（仅md文件需要） -->
+                    <div class="image-folder-selector" id="image-folder-selector">
+                        <h3>图片文件夹</h3>
+                        <p class="hint-text">上传 .md 文件时，请指定图片目录</p>
+                        <div class="folder-input-group">
+                            <input type="text" id="image-folder-path" class="folder-input" placeholder="例如: D:\教案\images">
+                            <button class="btn btn-small btn-icon" id="clear-folder-btn" title="清空路径">清空</button>
+                        </div>
+                        <p class="hint-text" style="margin-top: 0.5rem; font-size: 0.8rem; color: #888;">docx / pdf 文件会自动提取图片，无需手动指定</p>
+                    </div>
+
+                    <div class="recent-files">
+                        <h3>最近使用</h3>
+                        <ul id="recent-files-list">
+                            <li class="empty-state">暂无历史记录</li>
+                        </ul>
+                    </div>
+
+                    <div class="rules-summary">
+                        <h3>检测规则</h3>
+                        <div class="rules-count">
+                            共 <span id="rules-count">19</span> 条规则
+                        </div>
+                        <button class="btn btn-small" id="view-rules-btn">查看规则详情</button>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- 中间栏：文档渲染 -->
+            <main class="center-panel">
+                <div class="panel-header">
+                    <div>
+                        <span class="panel-label">预览</span>
+                        <h2>文档内容</h2>
+                    </div>
+                    <div class="toolbar">
+                        <div class="pagination-controls" id="pagination-controls" style="display: none;">
+                            <button class="btn btn-small" id="prev-page-btn" disabled>
+                                上一页
+                            </button>
+                            <div class="page-indicator">
+                                <span id="current-page">1</span> / <span id="total-pages">1</span>
+                            </div>
+                            <button class="btn btn-small" id="next-page-btn" disabled>
+                                下一页
+                            </button>
+                            <div class="page-selector">
+                                <input type="number" id="page-input" min="1" value="1" style="width: 60px;">
+                                <button class="btn btn-small" id="go-to-page-btn">跳转</button>
+                            </div>
+                        </div>
+                        <button class="btn btn-small" id="toggle-highlight">切换高亮</button>
+                        <button class="btn btn-small" id="export-btn" disabled>导出报告</button>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div id="document-content" class="document-content">
+                        <div class="empty-state">
+                            <div class="empty-icon">文档</div>
+                            <p>请从左侧选择文档</p>
+                            <p class="hint">支持 Word (.docx) / PDF / Markdown (.md) 格式</p>
+                        </div>
+                    </div>
+                    <!-- 添加分页内容容器 -->
+                    <div id="page-content-container" style="display: none;"></div>
+                    <div id="loading-overlay" class="loading-overlay" style="display: none;">
+                        <div class="spinner"></div>
+                        <p id="loading-status">正在检测中，请稍候...</p>
+                        <div class="progress-container">
+                            <div class="progress-bar" id="progress-bar"></div>
+                        </div>
+                        <p class="progress-text" id="progress-text">0%</p>
+                    </div>
+                </div>
+            </main>
+
+            <!-- 右侧栏：检测报告 -->
+            <aside class="right-panel">
+                <div class="panel-header">
+                    <div>
+                        <span class="panel-label">结果</span>
+                        <h2>检测报告</h2>
+                    </div>
+                </div>
+                <div class="panel-body" id="report-content">
+                    <div class="empty-state">
+                        <div class="empty-icon">报告</div>
+                        <p>等待检测结果</p>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <!-- 规则详情弹窗 -->
+    <div id="rules-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>合规检测规则</h2>
+                <button class="modal-close" id="close-rules-modal">&times;</button>
+            </div>
+            <div class="modal-body" id="rules-modal-body">
+                <p>加载中...</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
