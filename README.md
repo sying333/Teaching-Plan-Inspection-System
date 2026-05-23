@@ -2,6 +2,10 @@
 
 基于LangChain + DeepSeek + Qwen-VL的教案合规性自动检测系统
 
+
+#系统界面：
+<img width="1919" height="921" alt="QQ20260523-224239" src="https://github.com/user-attachments/assets/42a21d84-c345-478f-b4d1-673adfe305f1" />
+
 ## 🌟 功能特性
 
 - ✅ **智能解析**：自动解析Markdown格式的教案文档，提取文本段落和图片
